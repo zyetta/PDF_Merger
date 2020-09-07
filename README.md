@@ -1,8 +1,13 @@
 # PDF_Merger
  
-1.	Ensure that Python and Pip/Pip3 is installed
-2.	Install PyPDF2 -> pip3 install PyPDF2 
-3. 	Insert PDFs to merge in to_merge. They will be merged by name, so rename them to the numbered order you would like them to be merged in
-4.	Run Script. Either inside IdleIDE, or in terminal with "python ./dir_to_script/merger_script.py"
-5.	Merged PDF and File contents will be inside "/merge/DATE_TIME"
-	
+1.	Select PDF Location with "PDF Location"
+2.	Select PDF Destination with "PDF Destination"
+3.	Merge PDF - PDFs will not be overwritten, but will instead by saved as "merged_X.pdf" where X is a counter
+
+
+
+-----------------------------------------------------------------------------------------
+Programmed and Compiled by Zyetta
+Makes use of the following external PyPI packages
+-	tkinter
+-	PyPDF2
