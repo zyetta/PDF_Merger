@@ -120,7 +120,6 @@ if __name__ == "__main__":
     window = tk.Tk()
     window.title("PDF Merger")
     window.resizable(width=0, height=0)
-    window.iconbitmap('mi_pi.ico')
 
     # -----------------------------Source-----------------------------
 
