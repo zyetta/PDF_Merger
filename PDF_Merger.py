@@ -5,16 +5,18 @@ from functools import partial
 from tkinter import filedialog
 from PyPDF2 import PdfFileMerger
 import os
+from operator import itemgetter
+
 
 # Golobal Parameters
 EXT = {
     "PDF": "pdf",
 }
 EXTENSION = "pdf"
-des_file_dir = r"C:\Users"
-src_file_dir = r"C:\Users"
-
-
+des_file_dir = r"C:/Users"
+src_file_dir = r"C:/Users"
+found_files = ""
+text_variable = []
 # --------------------------------------------------------------------------------------
 #   Description: Scans for all files of a certain extension in a certain directory
 #
@@ -23,8 +25,16 @@ src_file_dir = r"C:\Users"
 #
 #   return:     Array of files w/ extensions
 # --------------------------------------------------------------------------------------
-def scan_files(src, ext):
-    return glob.glob(src + "/*." + str(ext))
+
+
+def scan_files():
+    global found_files, src_file_dir, EXTENSION, scan_lab
+    found_files = glob.glob(src_file_dir + "/*." + str(EXTENSION))
+    scan_lab["text"] = str(len(found_files)) + " File(s) Found"
+    if(len(found_files) <= 0):
+        scan_lab["fg"] = "red"
+    else:
+        scan_lab["fg"] = "black"
 
 # --------------------------------------------------------------------------------------
 #   Description: Selects a file directoy
@@ -69,27 +79,26 @@ def callback(url):
 
 
 def merge_pdfs():
-    global EXTENSION, des_file_dir, src_file_dir, des_file_dir, src_lab, des_lab, merge_status, file_name
+    global EXTENSION, des_file_dir, src_file_dir, des_file_dir, src_lab, des_lab, merge_status, file_name, found_files
 
-    found_files = scan_files(src_file_dir, str(EXTENSION))
     if found_files:
         try:
             # ---------PDF MERGER-----------------
             merger = PdfFileMerger()
             for f in found_files:
                 merger.append(f)
-            print(file_name.get())
-            if(str(file_name.get()) == ""):
+            fn = str(file_name.get())
+            if(not fn):
                 file_name_hold = "/merged"
             else:
-                file_name_hold = "/" + str(file_name.get())
+                file_name_hold = "/" + fn
             i = 1
 
             while(os.path.isfile(des_file_dir + file_name_hold + ".pdf")):
                 if(file_name == ""):
                     file_name_hold = "/merged_" + str(i)
                 else:
-                    file_name_hold = "/" + str(file_name) + "_" + str(i)
+                    file_name_hold = "/" + fn + "_" + str(i)
                 i += 1
 
             merger.write(des_file_dir + file_name_hold + ".pdf")
@@ -108,6 +117,52 @@ def merge_pdfs():
         merge_status["text"] = "No " + str(EXTENSION) + "'s  Found"
         merge_status["foreground"] = "red"
         print("No PDF's Found")
+
+
+def rearrange_files():
+    global found_files, text_variable
+    newWindow = tk.Toplevel(window)
+    newWindow.title("Rearrange")
+
+    j = 0
+    text_variable = []
+    for i in range(len(found_files)):
+        text_variable.append(tk.IntVar(master=newWindow, value=(j+1), name=str(j)))
+        j += 1
+
+    tk.Label(master=newWindow, text="Found Files", fg="black").grid(
+        column=0, row=0, sticky="w", padx=pad_x*2, pady=pad_y*2)
+    file_item = tk.Frame(master=newWindow)
+    j = 0
+    for i in found_files:
+        spin_box = tk.Spinbox(master=file_item, from_=1,
+                              to=100, increment=1, textvariable=text_variable[j])
+        spin_box.grid(column=0, row=j, sticky="w", padx=pad_x*2, pady=pad_y*2)
+        tk.Label(master=file_item, text=i, fg="black").grid(
+            column=1, row=j, sticky="w", padx=pad_x*2, pady=pad_y*2)
+        j += 1
+    file_item.grid(row=1, column=0, padx=pad_x, pady=pad_y, sticky="w")
+
+    tk.Button(master=newWindow, text="Save",
+                         width=10, height=1, fg="black", command=partial(save_order, newWindow)).grid(row=2, column=0, padx=pad_x, pady=pad_y, sticky="w")
+
+def save_order(a):
+    global found_files
+    j = 0
+    final = []
+    buffer = []
+    for i in text_variable:
+        buffer.append([i.get(), found_files[j]])
+        j+=1
+    buffer = sorted(buffer, key=itemgetter(0))
+    
+    for i in range(len(buffer)):
+        final.append(buffer[i][1])
+    found_files = final
+    a.destroy()
+
+
+
 
 
 # --------------------------------------------------------------------------------------
@@ -174,13 +229,36 @@ if __name__ == "__main__":
     fn_lab_frm.grid(row=0, column=0, padx=pad_x, pady=pad_y)
     fn_frm.grid(row=3, column=0, padx=pad_x, pady=pad_y, sticky="ew")
 
+    # -----------------------------Scan Files-------------------------------
+    scn_frm = tk.Frame(master=window)
+
+    scn_lab_frm = tk.LabelFrame(
+        master=scn_frm, text="File Management")
+
+    scan_but = tk.Button(master=scn_lab_frm, text="Scan for Files",
+                         width=10, height=1, fg="black", command=scan_files)
+    scan_but.grid(column=0, row=0, sticky="w", padx=pad_x, pady=pad_y)
+
+    scan_lab = tk.Label(master=scn_lab_frm, text="0 File(s) Found",
+                        anchor="e", justify=tk.LEFT)
+    scan_lab.grid(column=1, row=0, sticky="e", padx=pad_x, pady=pad_y)
+
+    scan_order = tk.Button(master=scn_lab_frm, text="Rearrange",
+                           width=10, height=1, fg="black", command=rearrange_files)
+
+    scan_order.grid(column=0, row=0, sticky="w", padx=pad_x, pady=pad_y)
+    scan_order.grid(row=1, column=0, padx=pad_x, pady=pad_y, sticky="ew")
+    scn_lab_frm.grid(row=0, column=0, padx=pad_x, pady=pad_y, sticky="ew")
+    scn_frm.grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky="ew")
+
     # -----------------------------Merge-------------------------------
     merge_frm = tk.Frame(master=window)
+
     merg_but = tk.Button(master=merge_frm, text="Merge",
                          width=10, height=1, fg="black", command=merge_pdfs)
     merg_but.grid(column=0, row=0, sticky="w", padx=pad_x, pady=pad_y)
 
-    merge_status = tk.Label(master=merge_frm, text="Hello",
+    merge_status = tk.Label(master=merge_frm, text="Hello World",
                             anchor="e", justify=tk.LEFT)
     merge_status.grid(column=1, row=0, sticky="e", padx=pad_x, pady=pad_y)
 
@@ -188,6 +266,6 @@ if __name__ == "__main__":
                      anchor="n", foreground="blue")
     aknow.bind("<Button-1>", lambda e: callback("https://github.com/zyetta"))
     aknow.grid(row=1, column=0, sticky=tk.W+tk.E)
-    merge_frm.grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky="sw")
+    merge_frm.grid(row=5, column=0, padx=pad_x, pady=pad_y, sticky="sw")
 
     window.mainloop()
